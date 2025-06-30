@@ -46,6 +46,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Enable CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+             .AllowAnyMethod()
+             .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -60,6 +70,7 @@ app.UseRouting();
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 

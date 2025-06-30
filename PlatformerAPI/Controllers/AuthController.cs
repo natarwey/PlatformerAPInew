@@ -24,11 +24,28 @@ namespace PlatformerAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
+            Console.WriteLine($"Received login request for username: {request.Username}");
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+            if (user == null)
             {
-                return Unauthorized();
+                return Unauthorized("User not found");
+            }
+
+            try
+            {
+                bool verified = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+                if (!verified)
+                {
+                    return Unauthorized("Invalid password");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Логируем проблему с хэшированием
+                Console.WriteLine($"Error verifying password: {ex.Message}");
+                return StatusCode(500, "Internal server error");
             }
 
             var token = _authService.GenerateToken(user.Username);

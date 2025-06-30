@@ -19,13 +19,14 @@ namespace PlatformerAPI.Hubs
             var msg = new Message
             {
                 Username = username,
-                Text = message
+                Text = message,
+                Timestamp = DateTime.UtcNow
             };
 
             await _db.Messages.AddAsync(msg);
             await _db.SaveChangesAsync();
 
-            await Clients.All.SendAsync("ReceiveMessage", msg.Username, msg.Text, msg.Timestamp);
+            await Clients.All.SendAsync("ReceiveMessage", msg.Username, msg.Text, msg.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
         }
 
         public async Task GetHistory()
@@ -33,8 +34,14 @@ namespace PlatformerAPI.Hubs
             var messages = await _db.Messages.OrderBy(m => m.Timestamp).ToListAsync();
             foreach (var msg in messages)
             {
-                await Clients.Caller.SendAsync("ReceiveMessage", msg.Username, msg.Text, msg.Timestamp);
+                await Clients.Caller.SendAsync("ReceiveMessage", msg.Username, msg.Text, msg.Timestamp.ToString("yyyy-MM-dd HH:mm:ss"));
             }
+        }
+
+        public override async Task OnConnectedAsync()
+        {
+            await base.OnConnectedAsync();
+            await GetHistory();
         }
     }
 }
